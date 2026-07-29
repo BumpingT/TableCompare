@@ -1,0 +1,6 @@
+# 表格对比工具 (TableDiff) 依赖清单
+# 安装方式: pip install -r requirements.txt
+
+PySide6>=6.5.0
+pandas>=2.0.0
+openpyxl>=3.1.0

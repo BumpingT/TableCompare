@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TableDiff 表格对比工具 — 效果展示</title>
+<style>
+  /* ============ 全局 ============ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: #f0f4f8;
+    color: #1e293b;
+    padding: 24px;
+  }
+  .container { max-width: 1300px; margin: 0 auto; }
+
+  /* ============ 头部 ============ */
+  .header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 16px;
+    padding: 32px 40px;
+    color: white;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  }
+  .header-icon { font-size: 48px; }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .header p { color: #94a3b8; font-size: 14px; }
+  .header .stats-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    gap: 24px;
+  }
+  .badge-item { text-align: center; }
+  .badge-num { font-size: 22px; font-weight: 700; display: block; }
+  .badge-label { font-size: 11px; color: #94a3b8; }
+
+  /* ============ 面板通用 ============ */
+  .panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .panel-header {
+    padding: 16px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-body { padding: 20px 24px; }
+
+  /* ============ 文件区 ============ */
+  .file-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .file-card {
+    border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .file-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .file-card-header {
+    padding: 12px 16px; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .file-card-header.old { background: #eff6ff; color: #1d4ed8; }
+  .file-card-header.new { background: #f0fdf4; color: #15803d; }
+  .file-meta {
+    padding: 8px 16px; background: #f8fafc; font-size: 12px; color: #64748b;
+    border-bottom: 1px solid #e2e8f0; display: flex; gap: 16px;
+  }
+
+  /* ============ 表格 ============ */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    background: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 600;
+    font-size: 12px; color: #475569; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0;
+  }
+  .data-table td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+  .data-table tr:hover td { background: #f8fafc; }
+
+  /* ============ 对比设置 ============ */
+  .settings-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .settings-row .key-badge {
+    background: #eff6ff; color: #1d4ed8;
+    padding: 4px 12px; border-radius: 6px;
+    font-size: 13px; font-weight: 600;
+  }
+  .settings-row .col-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .col-tag { background: #f1f5f9; color: #475569; padding: 2px 10px; border-radius: 4px; font-size: 12px; }
+  .col-tag.checked { background: #dbeafe; color: #1d4ed8; }
+  .btn-compare {
+    margin-left: auto;
+    background: #2563eb; color: white; border: none;
+    padding: 10px 28px; border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, transform 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-compare:hover { background: #1d4ed8; }
+  .btn-compare:active { transform: scale(0.97); }
+
+  /* ============ 对比结果表格 ============ */
+  .result-wrapper { max-height: 420px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .result-wrapper::-webkit-scrollbar { width: 6px; }
+  .result-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
+  .result-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result-table th {
+    background: #2c3e50; color: white; padding: 8px 12px;
+    font-size: 12px; font-weight: 600; text-align: left;
+    border-right: 1px solid #3d566e; white-space: nowrap;
+    position: sticky; top: 0; z-index: 2;
+  }
+  .result-table td { padding: 6px 12px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+  .result-table .status-cell { font-weight: 700; text-align: center; min-width: 60px; }
+  .result-table .status-added { background: #d5f5e3; }
+  .result-table .status-deleted { background: #fadbd8; }
+  .result-table .status-modified { background: #fef9e7; }
+  .result-table .cell-changed { background: #f5cba7 !important; }
+  .result-table .cell-key { color: #64748b; font-family: monospace; font-size: 12px; }
+
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-added { background: #d5f5e3; color: #065f46; }
+  .tag-deleted { background: #fadbd8; color: #991b1b; }
+  .tag-modified { background: #fef9e7; color: #92400e; }
+  .tag-same { background: #f1f5f9; color: #64748b; }
+
+  /* ============ 统计栏 ============ */
+  .stats-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat-card {
+    padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid #e2e8f0; transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-1px); }
+  .stat-added { background: #d5f5e3; color: #065f46; }
+  .stat-deleted { background: #fadbd8; color: #991b1b; }
+  .stat-modified { background: #fef9e7; color: #92400e; }
+  .stat-same { background: #f8fafc; color: #64748b; }
+
+  /* ============ 图表 ============ */
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-box { text-align: center; }
+  .chart-box h4 { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+  .bar-chart { display: flex; gap: 12px; justify-content: center; align-items: flex-end; height: 120px; }
+  .bar-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar {
+    width: 48px; border-radius: 6px 6px 0 0;
+    transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 6px; font-size: 13px; font-weight: 700; color: white;
+    min-height: 4px;
+  }
+  .bar-label { font-size: 11px; color: #64748b; }
+
+  /* ============ 流程动画 ============ */
+  .flow-steps { display: flex; justify-content: center; gap: 0; margin: 16px 0; }
+  .flow-step {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; font-size: 13px; color: #94a3b8; position: relative;
+  }
+  .flow-step.active { color: #1d4ed8; font-weight: 600; }
+  .flow-step.done { color: #15803d; }
+  .flow-step::after { content: '→'; margin-left: 16px; color: #cbd5e1; }
+  .flow-step:last-child::after { display: none; }
+  .flow-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #e2e8f0; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 700; color: white;
+  }
+  .flow-step.active .flow-dot { background: #2563eb; }
+  .flow-step.done .flow-dot { background: #10b981; }
+
+  /* ============ 图例 ============ */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 8px 0; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; }
+  .legend-color { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #e2e8f0; }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 800px) {
+    .file-grid, .chart-row { grid-template-columns: 1fr; }
+    .header { flex-direction: column; text-align: center; }
+    .header .stats-badge { margin: 0; }
+    .settings-row { flex-direction: column; align-items: stretch; }
+    .btn-compare { margin: 0; }
+  }
+
+  /* ============ 滚动动画 ============ */
+  .fade-in { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* 导航按钮 */
+  .nav-bar { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+  .nav-btn {
+    background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px;
+    padding: 4px 14px; font-size: 12px; cursor: pointer; color: #1e293b; transition: background 0.15s;
+  }
+  .nav-btn:hover { background: #e2e8f0; }
+  .nav-btn:disabled { color: #cbd5e1; cursor: default; }
+  .nav-info { font-size: 12px; color: #64748b; margin: 0 8px; }
+  .filter-cb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #1e293b; cursor: pointer; }
+  .filter-cb input { accent-color: #2563eb; }
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+
+  <!-- ======== 头部 ======== -->
+  <div class="header fade-in visible">
+    <div class="header-icon">📋</div>
+    <div>
+      <h1>TableDiff 表格对比工具</h1>
+      <p>导入两个表格 → 自动对比差异 → 高亮标出新增 / 删除 / 修改</p>
+    </div>
+    <div class="stats-badge">
+      <div class="badge-item"><span class="badge-num" id="bigTotal">—</span><span class="badge-label">总行</span></div>
+      <div class="badge-item"><span class="badge-num" style="color:#10b981;">—</span><span class="badge-label">新增</span></div>
+      <div class="badge-item"><span class="badge-num" style="color:#ef4444;">—</span><span class="badge-label">删除</span></div>
+      <div class="badge-item"><span class="badge-num" style="color:#f59e0b;">—</span><span class="badge-label">修改</span></div>
+    </div>
+  </div>
+
+  <!-- ======== 流程 ======== -->
+  <div class="panel fade-in visible">
+    <div class="panel-body" style="padding:12px 24px;">
+      <div class="flow-steps">
+        <div class="flow-step done"><span class="flow-dot">1</span> 加载文件</div>
+        <div class="flow-step done"><span class="flow-dot">2</span> 选择键列</div>
+        <div class="flow-step active" id="flowStep3"><span class="flow-dot">3</span> 开始对比</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 文件区 ======== -->
+  <div class="panel fade-in visible">
+    <div class="panel-header">📂 文件导入</div>
+    <div class="panel-body">
+      <div class="file-grid">
+        <div class="file-card">
+          <div class="file-card-header old">📄 初始版（旧版）</div>
+          <div class="file-meta">
+            <span>📁 员工信息_初始版.xlsx</span>
+            <span>📊 5 行 × 5 列</span>
+          </div>
+          <div style="max-height:200px; overflow-y:auto;">
+            <table class="data-table" id="tableOld">
+              <thead><tr><th>ID</th><th>姓名</th><th>年龄</th><th>部门</th><th>薪资</th></tr></thead>
+              <tbody id="tbodyOld"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="file-card">
+          <div class="file-card-header new">📄 修改版（新版）</div>
+          <div class="file-meta">
+            <span>📁 员工信息_修改版.xlsx</span>
+            <span>📊 6 行 × 5 列</span>
+          </div>
+          <div style="max-height:200px; overflow-y:auto;">
+            <table class="data-table" id="tableNew">
+              <thead><tr><th>ID</th><th>姓名</th><th>年龄</th><th>部门</th><th>薪资</th></tr></thead>
+              <tbody id="tbodyNew"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 对比设置 ======== -->
+  <div class="panel fade-in" id="panelSettings">
+    <div class="panel-header">⚙️ 对比设置</div>
+    <div class="panel-body">
+      <div class="settings-row">
+        <span class="key-badge">🔑 键列: ID</span>
+        <span style="font-size:13px;color:#64748b;">对比列:</span>
+        <div class="col-tags">
+          <span class="col-tag checked">✅ 姓名</span>
+          <span class="col-tag checked">✅ 年龄</span>
+          <span class="col-tag checked">✅ 部门</span>
+          <span class="col-tag checked">✅ 薪资</span>
+        </div>
+        <button class="btn-compare" id="btnCompare" onclick="runCompare()">▶ 开始对比</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 统计 ======== -->
+  <div class="panel fade-in" id="panelStats">
+    <div class="panel-header">📊 对比统计</div>
+    <div class="panel-body">
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card stat-added"  id="statAdded">🟢 新增：<span>0</span></div>
+        <div class="stat-card stat-deleted" id="statDeleted">🔴 删除：<span>0</span></div>
+        <div class="stat-card stat-modified" id="statModified">🟡 修改：<span>0</span></div>
+        <div class="stat-card stat-same"    id="statSame">⚪ 相同：<span>0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 图表 ======== -->
+  <div class="panel fade-in" id="panelChart">
+    <div class="panel-header">📈 差异分布</div>
+    <div class="panel-body">
+      <div class="chart-row">
+        <div class="chart-box">
+          <h4>行级别统计</h4>
+          <div class="bar-chart" id="barChart">
+            <div class="bar-group"><div class="bar" id="barAdded"   style="height:0; background:#10b981;">0</div><span class="bar-label">新增</span></div>
+            <div class="bar-group"><div class="bar" id="barDeleted" style="height:0; background:#ef4444;">0</div><span class="bar-label">删除</span></div>
+            <div class="bar-group"><div class="bar" id="barModified" style="height:0; background:#f59e0b;">0</div><span class="bar-label">修改</span></div>
+            <div class="bar-group"><div class="bar" id="barSame"    style="height:0; background:#94a3b8;">0</div><span class="bar-label">相同</span></div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <h4>颜色图例</h4>
+          <div class="legend" style="justify-content:center; margin-top:20px;">
+            <div class="legend-item"><div class="legend-color" style="background:#d5f5e3;"></div> 新增行（绿）</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fadbd8;"></div> 删除行（红）</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fef9e7;"></div> 修改行（黄）</div>
+            <div class="legend-item"><div class="legend-color" style="background:#f5cba7;"></div> 变化单元格（橙）</div>
+          </div>
+          <div class="legend" style="justify-content:center; margin-top:8px;">
+            <div class="legend-item">🟢 新增 | 🔴 删除 | 🟡 修改 | ⚪ 相同</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 结果表格 ======== -->
+  <div class="panel fade-in" id="panelResult">
+    <div class="panel-header" style="display:flex; align-items:center; gap:12px;">
+      <span>📋 对比结果</span>
+      <span style="flex:1;"></span>
+      <div class="nav-bar">
+        <label class="filter-cb">
+          <input type="checkbox" id="filterDiff" onchange="toggleFilter()"> ☑ 仅显示差异行
+        </label>
+        <span class="nav-info" id="navInfo">差异 1/5</span>
+        <button class="nav-btn" id="navPrev" onclick="navDiff(-1)">◀ 上一条</button>
+        <button class="nav-btn" id="navNext" onclick="navDiff(1)">下一条 ▶</button>
+      </div>
+    </div>
+    <div class="panel-body" style="padding:0 0 16px 0;">
+      <div class="result-wrapper" id="resultWrapper">
+        <table class="result-table" id="resultTable">
+          <thead id="resultHead"></thead>
+          <tbody id="resultBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">
+    TableDiff · 基于 Python + PySide6 + pandas · 支持 10 万行以上数据
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ======== 第二部分：一长列数据（按行号匹配）演示 ======== -->
+<!-- ============================================================ -->
+<div class="container" style="margin-top:40px;border-top:3px dashed #cbd5e1;padding-top:32px;">
+
+  <div class="header" style="background:linear-gradient(135deg,#0f766e 0%,#14b8a6 100%);">
+    <div class="header-icon">📏</div>
+    <div>
+      <h1 style="font-size:22px;">一长列数据 · 按行号匹配</h1>
+      <p>没有键列？勾选「按行号匹配」→ 按顺序位置一一对比</p>
+    </div>
+  </div>
+
+  <!-- 源数据 -->
+  <div class="panel fade-in visible">
+    <div class="panel-header">📂 一长列数据 — 两表按行号一一对应</div>
+    <div class="panel-body">
+      <div class="file-grid">
+        <div class="file-card">
+          <div class="file-card-header old">📄 初始版</div>
+          <div class="file-meta"><span>📊 4 行 × 1 列</span></div>
+          <table class="data-table" style="width:100%;">
+            <thead><tr><th>#</th><th>产品名称</th></tr></thead>
+            <tbody>
+              <tr><td style="color:#94a3b8;">1</td><td>苹果</td></tr>
+              <tr><td style="color:#94a3b8;">2</td><td>香蕉</td></tr>
+              <tr><td style="color:#94a3b8;">3</td><td>橙子</td></tr>
+              <tr><td style="color:#94a3b8;">4</td><td>葡萄</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="file-card">
+          <div class="file-card-header new">📄 修改版</div>
+          <div class="file-meta"><span>📊 5 行 × 1 列</span></div>
+          <table class="data-table" style="width:100%;">
+            <thead><tr><th>#</th><th>产品名称</th></tr></thead>
+            <tbody>
+              <tr><td style="color:#94a3b8;">1</td><td>苹果</td></tr>
+              <tr><td style="color:#94a3b8;">2</td><td>香蕉</td></tr>
+              <tr><td style="color:#94a3b8;">3</td><td style="font-weight:700;color:#d97706;">草莓</td></tr>
+              <tr><td style="color:#94a3b8;">4</td><td>葡萄</td></tr>
+              <tr><td style="color:#94a3b8;">5</td><td style="font-weight:700;color:#059669;">芒果</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置 -->
+  <div class="panel fade-in visible">
+    <div class="panel-header">⚙️ 对比设置</div>
+    <div class="panel-body">
+      <div class="settings-row">
+        <span class="key-badge" style="background:#0f766e;color:white;">🔑 行号（自动）</span>
+        <span style="font-size:13px;color:#64748b;">对比列:</span>
+        <div class="col-tags">
+          <span class="col-tag checked">✅ 产品名称</span>
+        </div>
+        <span style="margin-left:auto;background:#ccfbf1;color:#0f766e;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;">✓ 勾选「按行号匹配」</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 对比结果 -->
+  <div class="panel fade-in visible">
+    <div class="panel-header">
+      📋 对比结果（按行号匹配）
+      <span style="flex:1;"></span>
+      <div class="stats-row" style="gap:8px;">
+        <div class="stat-card stat-added"   style="padding:4px 12px;font-size:12px;">🟢 新增：1</div>
+        <div class="stat-card stat-modified" style="padding:4px 12px;font-size:12px;">🟡 修改：1</div>
+        <div class="stat-card stat-same"     style="padding:4px 12px;font-size:12px;">⚪ 相同：3</div>
+      </div>
+    </div>
+    <div class="panel-body" style="padding:0 0 16px 0;">
+      <div class="result-wrapper" style="max-height:300px;">
+        <table class="result-table">
+          <thead><tr>
+            <th style="width:70px;">状态</th><th style="width:60px;">行号</th>
+            <th>产品名称 (旧)</th><th>产品名称 (新)</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="status-cell"><span class="tag tag-same">相同</span></td><td class="cell-key">#1</td><td>苹果</td><td>苹果</td></tr>
+            <tr><td class="status-cell"><span class="tag tag-same">相同</span></td><td class="cell-key">#2</td><td>香蕉</td><td>香蕉</td></tr>
+            <tr class="status-modified">
+              <td class="status-cell"><span class="tag tag-modified">修改</span></td><td class="cell-key">#3</td>
+              <td class="cell-changed">橙子</td><td class="cell-changed">草莓</td>
+            </tr>
+            <tr><td class="status-cell"><span class="tag tag-same">相同</span></td><td class="cell-key">#4</td><td>葡萄</td><td>葡萄</td></tr>
+            <tr class="status-added">
+              <td class="status-cell"><span class="tag tag-added">新增</span></td><td class="cell-key">#5</td>
+              <td style="color:#94a3b8;">—</td><td>芒果</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:12px;color:#94a3b8;font-size:12px;">
+    ✅ 无需键列，按行号位置一一对应 — 适用于纯名单、清单、一维列表
+  </div>
+</div>
+
+<script>
+// ======================== 数据 ========================
+const oldData = [
+  { id:'A001', name:'张三', age:'28', dept:'技术部', salary:'12,000' },
+  { id:'A002', name:'李四', age:'32', dept:'市场部', salary:'15,000' },
+  { id:'A003', name:'王五', age:'45', dept:'财务部', salary:'18,000' },
+  { id:'A004', name:'赵六', age:'19', dept:'技术部', salary:'8,000' },
+  { id:'A005', name:'钱七', age:'36', dept:'人事部', salary:'14,000' },
+];
+const newData = [
+  { id:'A001', name:'张三', age:'29', dept:'技术部', salary:'12,500' },
+  { id:'A002', name:'李四', age:'32', dept:'市场部', salary:'15,000' },
+  { id:'A003', name:'王五', age:'45', dept:'财务部', salary:'18,000' },
+  { id:'A005', name:'钱七', age:'36', dept:'人事部', salary:'14,500' },
+  { id:'A006', name:'孙八', age:'25', dept:'研发部', salary:'16,000' },
+  { id:'A007', name:'周九', age:'41', dept:'行政部', salary:'13,000' },
+];
+
+const resultRows = [
+  { key:'A001', status:'modified', old:{ name:'张三', age:'28', dept:'技术部', salary:'12,000' }, new:{ name:'张三', age:'29', dept:'技术部', salary:'12,500' } },
+  { key:'A002', status:'same',     old:{ name:'李四', age:'32', dept:'市场部', salary:'15,000' }, new:{ name:'李四', age:'32', dept:'市场部', salary:'15,000' } },
+  { key:'A003', status:'same',     old:{ name:'王五', age:'45', dept:'财务部', salary:'18,000' }, new:{ name:'王五', age:'45', dept:'财务部', salary:'18,000' } },
+  { key:'A004', status:'deleted',  old:{ name:'赵六', age:'19', dept:'技术部', salary:'8,000' },  new:{ name:'', age:'', dept:'', salary:'' } },
+  { key:'A005', status:'modified', old:{ name:'钱七', age:'36', dept:'人事部', salary:'14,000' }, new:{ name:'钱七', age:'36', dept:'人事部', salary:'14,500' } },
+  { key:'A006', status:'added',    old:{ name:'', age:'', dept:'', salary:'' },                   new:{ name:'孙八', age:'25', dept:'研发部', salary:'16,000' } },
+  { key:'A007', status:'added',    old:{ name:'', age:'', dept:'', salary:'' },                   new:{ name:'周九', age:'41', dept:'行政部', salary:'13,000' } },
+];
+
+const changedCells = { 'A001_age':true, 'A001_salary':true, 'A005_salary':true };
+
+let currentFilter = false;
+let currentNavIndex = -1;
+let showingRows = [];
+let compareDone = false;
+
+// ======================== 渲染源表 ========================
+function renderTable(tbodyId, data) {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = data.map(r =>
+    `<tr><td style="font-family:monospace;color:#64748b;">${r.id}</td><td>${r.name}</td><td>${r.age}</td><td>${r.dept}</td><td>${r.salary}</td></tr>`
+  ).join('');
+}
+
+// ======================== 对比主流程 ========================
+function runCompare() {
+  if (compareDone) {
+    resetAll();
+    setTimeout(() => runCompare(), 400);
+    return;
+  }
+  const btn = document.getElementById('btnCompare');
+  btn.textContent = '⏳ 对比中...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    document.getElementById('flowStep3').className = 'flow-step done';
+    showStats();
+  }, 500);
+
+  setTimeout(() => { showChart(); }, 1000);
+
+  setTimeout(() => {
+    showResultTable();
+    btn.textContent = '🔄 重新对比';
+    btn.disabled = false;
+    compareDone = true;
+    document.getElementById('panelResult').scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 1600);
+}
+
+// ======================== 统计 ========================
+function showStats() {
+  document.getElementById('statAdded').querySelector('span').textContent = '2';
+  document.getElementById('statDeleted').querySelector('span').textContent = '1';
+  document.getElementById('statModified').querySelector('span').textContent = '2';
+  document.getElementById('statSame').querySelector('span').textContent = '2';
+  document.getElementById('bigTotal').textContent = '7';
+  document.querySelectorAll('.stats-badge .badge-num')[1].textContent = '2';
+  document.querySelectorAll('.stats-badge .badge-num')[2].textContent = '1';
+  document.querySelectorAll('.stats-badge .badge-num')[3].textContent = '2';
+  ['panelStats','panelSettings'].forEach(id => {
+    document.getElementById(id).classList.add('visible');
+  });
+}
+
+// ======================== 柱状图 ========================
+function showChart() {
+  const bars = [
+    { id:'barAdded',   val:2 }, { id:'barDeleted', val:1 },
+    { id:'barModified', val:2 }, { id:'barSame',    val:2 }
+  ];
+  bars.forEach((b, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(b.id);
+      el.style.height = Math.max(4, (b.val / 4) * 100) + 'px';
+      el.textContent = b.val;
+    }, i * 120);
+  });
+  document.getElementById('panelChart').classList.add('visible');
+}
+
+// ======================== 结果表格 ========================
+function buildResultHead() {
+  return `<tr>
+    <th style="width:70px;">状态</th><th style="width:80px;">键</th>
+    <th>姓名 (旧版)</th><th>年龄 (旧版)</th><th>部门 (旧版)</th><th>薪资 (旧版)</th>
+    <th>姓名 (新版)</th><th>年龄 (新版)</th><th>部门 (新版)</th><th>薪资 (新版)</th>
+  </tr>`;
+}
+
+function buildResultRow(r) {
+  const st = r.status;
+  const stClass = st==='added'?'status-added':st==='deleted'?'status-deleted':st==='modified'?'status-modified':'';
+  const tagClass = 'tag-'+st;
+  const tagMap = { added:'新增', deleted:'删除', modified:'修改', same:'相同' };
+  function cc(side, colKey) {
+    if (st !== 'modified') return '';
+    return changedCells[r.key+'_'+colKey] ? 'cell-changed' : '';
+  }
+  return `<tr class="${stClass}">
+    <td class="status-cell"><span class="tag ${tagClass}">${tagMap[st]}</span></td>
+    <td class="cell-key">${r.key}</td>
+    <td class="${cc('o','name')}">${r.old.name}</td>
+    <td class="${cc('o','age')}">${r.old.age}</td>
+    <td class="${cc('o','dept')}">${r.old.dept}</td>
+    <td class="${cc('o','salary')}">${r.old.salary}</td>
+    <td class="${cc('n','name')}">${r.new.name}</td>
+    <td class="${cc('n','age')}">${r.new.age}</td>
+    <td class="${cc('n','dept')}">${r.new.dept}</td>
+    <td class="${cc('n','salary')}">${r.new.salary}</td>
+  </tr>`;
+}
+
+function showResultTable() {
+  document.getElementById('resultHead').innerHTML = buildResultHead();
+  document.getElementById('panelResult').classList.add('visible');
+  currentFilter = false;
+  document.getElementById('filterDiff').checked = false;
+  updateVisibleRows();
+}
+
+function updateVisibleRows() {
+  const tbody = document.getElementById('resultBody');
+  if (currentFilter) {
+    showingRows = resultRows.map((r,i) => r.status !== 'same' ? i : -1).filter(i => i >= 0);
+  } else {
+    showingRows = resultRows.map((_, i) => i);
+  }
+  tbody.innerHTML = showingRows.map(i => buildResultRow(resultRows[i])).join('');
+  currentNavIndex = showingRows.length > 0 ? 0 : -1;
+  updateNavInfo();
+  scrollToCurrent();
+}
+
+function toggleFilter() {
+  currentFilter = document.getElementById('filterDiff').checked;
+  updateVisibleRows();
+}
+
+// ======================== 导航 ========================
+function navDiff(dir) {
+  if (showingRows.length === 0) return;
+  const diffIndices = [];
+  showingRows.forEach((srcIdx, displayIdx) => {
+    if (resultRows[srcIdx].status !== 'same') diffIndices.push(displayIdx);
+  });
+  if (diffIndices.length === 0) return;
+
+  let curPos = -1;
+  if (currentNavIndex >= 0 && currentNavIndex < showingRows.length) {
+    curPos = diffIndices.indexOf(currentNavIndex);
+  }
+  if (curPos < 0) curPos = 0;
+  curPos = (curPos + dir + diffIndices.length) % diffIndices.length;
+  currentNavIndex = diffIndices[curPos];
+
+  const tbody = document.getElementById('resultBody');
+  const rows = tbody.querySelectorAll('tr');
+  rows.forEach((r, i) => { r.style.outline = 'none'; });
+  if (rows[currentNavIndex]) {
+    rows[currentNavIndex].style.outline = '2px solid #2563eb';
+    rows[currentNavIndex].style.outlineOffset = '-2px';
+    rows[currentNavIndex].scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+  updateNavInfo();
+}
+
+function scrollToCurrent() {
+  if (currentNavIndex < 0 || currentNavIndex >= showingRows.length) return;
+  const tbody = document.getElementById('resultBody');
+  const rows = tbody.querySelectorAll('tr');
+  rows.forEach((r, i) => { r.style.outline = 'none'; });
+  if (rows[currentNavIndex]) {
+    rows[currentNavIndex].style.outline = '2px solid #2563eb';
+    rows[currentNavIndex].style.outlineOffset = '-2px';
+  }
+}
+
+function updateNavInfo() {
+  const diffIndices = [];
+  showingRows.forEach((srcIdx, displayIdx) => {
+    if (resultRows[srcIdx].status !== 'same') diffIndices.push(displayIdx);
+  });
+  const total = diffIndices.length;
+  let curPos = currentNavIndex >= 0 ? Math.max(0, diffIndices.indexOf(currentNavIndex)) : 0;
+  const info = document.getElementById('navInfo');
+  const prev = document.getElementById('navPrev');
+  const next = document.getElementById('navNext');
+  if (total === 0) {
+    info.textContent = '无差异';
+    prev.disabled = next.disabled = true;
+  } else {
+    info.textContent = `差异 ${curPos+1}/${total}`;
+    prev.disabled = next.disabled = false;
+  }
+}
+
+// ======================== 重置 ========================
+function resetAll() {
+  compareDone = false;
+  const btn = document.getElementById('btnCompare');
+  btn.textContent = '▶ 开始对比';
+  btn.disabled = false;
+  ['barAdded','barDeleted','barModified','barSame'].forEach(id => {
+    document.getElementById(id).style.height = '0';
+    document.getElementById(id).textContent = '0';
+  });
+  document.querySelectorAll('.stat-card span').forEach(el => el.textContent = '0');
+  document.getElementById('bigTotal').textContent = '—';
+  document.querySelectorAll('.stats-badge .badge-num').forEach((el,i)=>{if(i>0)el.textContent='—';});
+  document.getElementById('resultBody').innerHTML = '';
+  document.getElementById('resultHead').innerHTML = '';
+  document.getElementById('flowStep3').className = 'flow-step active';
+  ['panelStats','panelChart','panelResult'].forEach(id => {
+    document.getElementById(id).classList.remove('visible');
+  });
+}
+
+// ======================== 滚动显示动画 ========================
+function observePanels() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+}
+
+// ======================== 初始化 ========================
+window.onload = function() {
+  renderTable('tbodyOld', oldData);
+  renderTable('tbodyNew', newData);
+  observePanels();
+};
+</script>
+
+</body>
+</html>

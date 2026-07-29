@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec
+*.pyc
+
+# 项目构建产物
+TableDiff.exe
+TableDiff_history.json
+TableDiff_debug.log
+
+# 测试数据文件
+公司员工数据_*.xlsx
+test_export*.xlsx
+
+# IDE
+.vscode/
+.idea/
+
+# 系统
+Thumbs.db
+.DS_Store
