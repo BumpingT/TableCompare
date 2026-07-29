@@ -1,5 +1,7 @@
 # 📋 表格对比工具 TableDiff
 
+[![下载](https://img.shields.io/badge/Download-v1.0-brightgreen?style=for-the-badge&logo=github)](https://github.com/BumpingT/TableCompare/releases/latest)
+
 一个简洁高效的桌面端表格对比工具，轻松找出两个 Excel/CSV 表格之间的数据差异。
 
 ---
@@ -143,6 +145,21 @@ table_diff_tool/
 ├── README.md                   # 本文件
 └── SUMMARY.md                  # 项目总结
 ```
+
+---
+
+## ⬇️ 下载 exe
+
+点击上方 **Download** 按钮，跳转到 Releases 页面下载 `TableDiff.exe`。
+
+**首次使用需要创建 Release：**
+1. 打开 [GitHub 仓库](https://github.com/BumpingT/TableCompare)
+2. 点击右侧 **Releases** → **Create a new release**
+3. 标签版本填 `v1.0`，标题填 `v1.0` 
+4. 把 `C:\Users\Administrator\Documents\table_diff_tool\TableDiff.exe` 拖拽上传
+5. 点击 **Publish release**
+
+之后每次更新 exe，重复上述步骤发布新版本即可。
 
 ---
 
