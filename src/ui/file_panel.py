@@ -286,13 +286,14 @@ class FilePanel(QFrame):
 
     def _add_to_recent_files(self, file_path: str, sheet_name: str = ''):
         """将文件加入历史（去重，移到最前）"""
-        self._recent_files = [
-            f for f in self._recent_files
+        # 先重新加载 JSON，确保拿到另一侧面板刚加的文件
+        latest = self._load_recent_files()
+        latest = [
+            f for f in latest
             if f['path'] != file_path
         ]
-        self._recent_files.insert(0, {'path': file_path, 'sheet': sheet_name})
-        # 限制数量
-        self._recent_files = self._recent_files[:MAX_RECENT_FILES]
+        latest.insert(0, {'path': file_path, 'sheet': sheet_name})
+        self._recent_files = latest[:MAX_RECENT_FILES]
         self._save_recent_files()
 
     def _show_history_menu(self):
