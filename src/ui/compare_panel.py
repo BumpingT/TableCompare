@@ -49,13 +49,13 @@ class ComparePanel(QFrame):
 
         # 帮助按钮 — 点击弹窗解释键列的作用
         self._help_btn = QPushButton("?")
-        self._help_btn.setFixedSize(20, 20)
+        self._help_btn.setFixedSize(22, 22)
         self._help_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._help_btn.setStyleSheet("""
             QPushButton {
-                background-color: #E2E8F0;
+                background-color: #F1F5F9;
                 border: 1px solid #CBD5E1;
-                border-radius: 10px;
+                border-radius: 11px;
                 font-size: 11px;
                 font-weight: bold;
                 color: #64748B;
@@ -72,23 +72,7 @@ class ComparePanel(QFrame):
 
         self._key_combo = QComboBox()
         self._key_combo.setMinimumWidth(200)
-        self._key_combo.setMinimumHeight(30)
-        self._key_combo.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #CBD5E1;
-                border-radius: 6px;
-                padding: 4px 8px;
-                font-size: 12px;
-                background-color: white;
-            }
-            QComboBox:hover {
-                border-color: #2563EB;
-            }
-            QComboBox::drop-down {
-                border: none;
-                padding-right: 8px;
-            }
-        """)
+        self._key_combo.setMinimumHeight(32)
         self._key_combo.addItem("（请先加载文件）")
         key_layout.addWidget(self._key_combo)
 
@@ -116,20 +100,7 @@ class ComparePanel(QFrame):
         search_layout = QHBoxLayout()
         self._search_input = QLineEdit()
         self._search_input.setPlaceholderText("🔍  搜索列名...")
-        self._search_input.setMinimumHeight(28)
-        self._search_input.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #CBD5E1;
-                border-radius: 6px;
-                padding: 4px 8px;
-                font-size: 12px;
-                background-color: #F8FAFC;
-            }
-            QLineEdit:focus {
-                border-color: #2563EB;
-                background-color: white;
-            }
-        """)
+        self._search_input.setMinimumHeight(30)
         self._search_input.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(self._search_input, 1)
 
@@ -168,8 +139,8 @@ class ComparePanel(QFrame):
         btn_layout.addStretch()
 
         self._compare_btn = QPushButton("▶  开始对比")
-        self._compare_btn.setMinimumHeight(38)
-        self._compare_btn.setMinimumWidth(140)
+        self._compare_btn.setMinimumHeight(40)
+        self._compare_btn.setMinimumWidth(150)
         self._compare_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._compare_btn.setEnabled(False)
         self._compare_btn.setStyleSheet("""
@@ -179,11 +150,14 @@ class ComparePanel(QFrame):
                 border: none;
                 border-radius: 8px;
                 font-size: 14px;
-                font-weight: bold;
-                padding: 8px 24px;
+                font-weight: 600;
+                padding: 8px 28px;
             }
             QPushButton:hover {
                 background-color: #1D4ED8;
+            }
+            QPushButton:pressed {
+                background-color: #1E40AF;
             }
             QPushButton:disabled {
                 background-color: #94A3B8;
@@ -200,7 +174,7 @@ class ComparePanel(QFrame):
             ComparePanel {
                 background-color: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 8px;
+                border-radius: 10px;
             }
         """)
 
@@ -219,23 +193,6 @@ class ComparePanel(QFrame):
         for i, col in enumerate(columns):
             cb = QCheckBox(col)
             cb.setChecked(True)
-            cb.setStyleSheet("""
-                QCheckBox {
-                    font-size: 12px;
-                    color: #1E293B;
-                    spacing: 6px;
-                }
-                QCheckBox::indicator {
-                    width: 16px;
-                    height: 16px;
-                    border: 1px solid #CBD5E1;
-                    border-radius: 3px;
-                }
-                QCheckBox::indicator:checked {
-                    background-color: #2563EB;
-                    border-color: #2563EB;
-                }
-            """)
             self._checkboxes[col] = cb
             row, col_idx = divmod(i, 4)
             self._col_layout.addWidget(cb, row, col_idx)

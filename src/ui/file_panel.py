@@ -197,11 +197,12 @@ class FilePanel(QFrame):
         self.setMinimumWidth(280)
 
     def _apply_style(self):
+        # 面板边框样式（特有状态：拖拽/已加载）
         self.setStyleSheet("""
             FilePanel {
                 background-color: #FFFFFF;
                 border: 2px dashed #CBD5E1;
-                border-radius: 8px;
+                border-radius: 10px;
             }
             FilePanel[file_loaded="true"] {
                 border: 2px solid #2563EB;
@@ -211,44 +212,59 @@ class FilePanel(QFrame):
                 border: 2px dashed #2563EB;
                 background-color: #EFF6FF;
             }
+        """)
+        # 主按钮 — 蓝色
+        self._select_btn.setStyleSheet("""
             QPushButton {
-                border-radius: 6px;
-                padding: 6px 16px;
-                font-size: 13px;
-            }
-            QPushButton#selectBtn {
                 background-color: #2563EB;
                 color: white;
                 border: none;
+                border-radius: 8px;
+                padding: 8px 18px;
+                font-size: 13px;
+                font-weight: 500;
             }
-            QPushButton#selectBtn:hover {
+            QPushButton:hover {
                 background-color: #1D4ED8;
             }
-            QPushButton#historyBtn {
-                background-color: #E2E8F0;
+            QPushButton:pressed {
+                background-color: #1E40AF;
+            }
+        """)
+        # 历史按钮 — 次要
+        self._history_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #F1F5F9;
                 color: #475569;
-                border: 1px solid #CBD5E1;
+                border: 1px solid #E2E8F0;
+                border-radius: 8px;
                 padding: 6px 4px;
+                font-size: 11px;
             }
-            QPushButton#historyBtn:hover {
-                background-color: #CBD5E1;
+            QPushButton:hover {
+                background-color: #E2E8F0;
+                border-color: #CBD5E1;
             }
-            QPushButton#clearBtn {
+        """)
+        # 清除按钮 — 红色次要
+        self._clear_btn.setStyleSheet("""
+            QPushButton {
                 background-color: transparent;
                 color: #EF4444;
                 border: 1px solid #FCA5A5;
+                border-radius: 8px;
+                padding: 8px 18px;
+                font-size: 13px;
             }
-            QPushButton#clearBtn:hover {
+            QPushButton:hover {
                 background-color: #FEF2F2;
+                border-color: #EF4444;
             }
-            QPushButton#clearBtn:disabled {
+            QPushButton:disabled {
                 color: #CBD5E1;
                 border-color: #E2E8F0;
             }
         """)
-        self._select_btn.setObjectName("selectBtn")
-        self._history_btn.setObjectName("historyBtn")
-        self._clear_btn.setObjectName("clearBtn")
 
     # ========== 文件历史 ==========
 

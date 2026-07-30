@@ -46,16 +46,16 @@ class StatsBar(QFrame):
 
         for key, prefix, color in stats_config:
             label = QLabel(f"{prefix}: —")
-            label.setStyleSheet(f"color: {color}; font-size: 13px; font-weight: bold;")
+            label.setStyleSheet(f"color: {color}; font-size: 13px; font-weight: 600; padding: 2px 0;")
             self._stats_labels[key] = label
             layout.addWidget(label)
 
         # 背景
         self.setStyleSheet("""
             StatsBar {
-                background-color: #F8FAFC;
+                background-color: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 8px;
+                border-radius: 10px;
             }
         """)
 

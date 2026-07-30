@@ -116,13 +116,24 @@ class ResultExporter:
                     rows_data.append([key_val, status_label, col, old_str, ''])
 
             elif status == STATUS_MODIFIED:
-                source_idx = df.index[row_idx]
                 for col in export_cols:
                     old_val = row.get(f'{col}_旧', '')
                     new_val = row.get(f'{col}_新', '')
                     old_str = str(old_val) if old_val is not None and old_val != '' else ''
                     new_str = str(new_val) if new_val is not None and new_val != '' else ''
                     rows_data.append([key_val, status_label, col, old_str, new_str])
+
+        # 按键值排序，相同键值的行排在一起
+        rows_data.sort(key=lambda r: (str(r[0]), r[1]))
+
+        # 在键值切换处插入空行（作为分组分隔）
+        grouped = []
+        prev_key = None
+        for row_vals in rows_data:
+            if prev_key is not None and str(row_vals[0]) != str(prev_key):
+                grouped.append(['', '', '', '', ''])  # 空行分隔
+            grouped.append(row_vals)
+            prev_key = row_vals[0]
 
             # status == same: 不导出（因为 only_diff 已经过滤了）
 
@@ -131,7 +142,7 @@ class ResultExporter:
         ws = wb.create_sheet(title="差异明细")
 
         ws.append(headers)
-        for row_vals in rows_data:
+        for row_vals in grouped:
             ws.append(row_vals)
 
         output_dir = os.path.dirname(output_path)
@@ -141,9 +152,9 @@ class ResultExporter:
         wb.save(output_path)
 
         # --- 应用样式 ---
-        ResultExporter._apply_styles(output_path, headers, rows_data, changed_cells, diff_result.stats)
+        ResultExporter._apply_styles(output_path, headers, grouped, changed_cells, diff_result.stats)
 
-        logger.info(f"导出成功: {output_path} ({len(rows_data)}行)")
+        logger.info(f"导出成功: {output_path} ({len(grouped)}行)")
         return output_path
 
     @staticmethod

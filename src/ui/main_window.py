@@ -4,6 +4,7 @@
 v3 — 增加拖拽导入、列搜索、汇总视图、差异详情、文件历史、多 Sheet 支持
 """
 import os
+import sys
 import logging
 import traceback
 
@@ -290,60 +291,15 @@ class MainWindow(QMainWindow):
 
     def _apply_global_style(self):
         """应用全局样式表"""
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #F8FAFC;
-            }
-            QSplitter::handle {
-                background-color: #E2E8F0;
-                width: 2px;
-            }
-            QMenuBar {
-                background-color: #FFFFFF;
-                border-bottom: 1px solid #E2E8F0;
-                padding: 2px 0;
-                font-size: 12px;
-                color: #1E293B;
-            }
-            QMenuBar::item:selected {
-                background-color: #F1F5F9;
-                border-radius: 4px;
-            }
-            QScrollBar:vertical {
-                border: none;
-                background: #F1F5F9;
-                width: 8px;
-                border-radius: 4px;
-            }
-            QScrollBar::handle:vertical {
-                background: #CBD5E1;
-                border-radius: 4px;
-                min-height: 30px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #94A3B8;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-            QScrollBar:horizontal {
-                border: none;
-                background: #F1F5F9;
-                height: 8px;
-                border-radius: 4px;
-            }
-            QScrollBar::handle:horizontal {
-                background: #CBD5E1;
-                border-radius: 4px;
-                min-width: 30px;
-            }
-            QScrollBar::handle:horizontal:hover {
-                background: #94A3B8;
-            }
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-                width: 0px;
-            }
-        """)
+        if getattr(sys, 'frozen', False):
+            # PyInstaller 打包：文件在 _MEIPASS/src/ui/ 下
+            qss_path = os.path.join(sys._MEIPASS, 'src', 'ui', 'table_diff_style.qss')
+        else:
+            # 源码运行：与 main_window.py 同目录
+            qss_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'table_diff_style.qss')
+        if os.path.exists(qss_path):
+            with open(qss_path, 'r', encoding='utf-8') as f:
+                self.setStyleSheet(f.read())
 
     def _restore_window_state(self):
         """恢复窗口位置和大小"""

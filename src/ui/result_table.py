@@ -360,17 +360,17 @@ class ResultTable(QFrame):
 
         # 汇总视图按钮（新增）
         self._summary_btn = QPushButton("📊  汇总视图")
-        self._summary_btn.setMinimumHeight(28)
+        self._summary_btn.setMinimumHeight(30)
         self._summary_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._summary_btn.setStyleSheet("""
             QPushButton {
                 background-color: #7C3AED;
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 4px 14px;
-                font-size: 11px;
-                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 16px;
+                font-size: 12px;
+                font-weight: 600;
             }
             QPushButton:hover { background-color: #6D28D9; }
             QPushButton:disabled { background-color: #DDD6FE; color: #C4B5FD; }
@@ -381,23 +381,22 @@ class ResultTable(QFrame):
 
         # 仅显示差异行 checkbox
         self._filter_cb = QCheckBox("☑  仅显示差异行")
-        self._filter_cb.setStyleSheet("font-size: 12px; color: #1E293B;")
         self._filter_cb.stateChanged.connect(self._on_filter_changed)
         toolbar.addWidget(self._filter_cb)
 
         # 导出按钮
         self._export_btn = QPushButton("📥  导出 Excel")
-        self._export_btn.setMinimumHeight(28)
+        self._export_btn.setMinimumHeight(30)
         self._export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._export_btn.setStyleSheet("""
             QPushButton {
                 background-color: #059669;
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 4px 14px;
-                font-size: 11px;
-                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 16px;
+                font-size: 12px;
+                font-weight: 600;
             }
             QPushButton:hover { background-color: #047857; }
             QPushButton:disabled { background-color: #A7F3D0; color: #D1FAE5; }
@@ -408,30 +407,30 @@ class ResultTable(QFrame):
 
         # 差异导航
         self._nav_label = QLabel("")
-        self._nav_label.setStyleSheet("color: #64748B; font-size: 12px; margin: 0 8px;")
+        self._nav_label.setStyleSheet("color: #64748B; font-size: 12px; margin: 0 8px; font-weight: 500;")
         toolbar.addWidget(self._nav_label)
 
         self._prev_btn = QPushButton("◀  上一条")
-        self._prev_btn.setMinimumHeight(28)
+        self._prev_btn.setMinimumHeight(30)
         self._prev_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._prev_btn.setStyleSheet("""
             QPushButton {
-                background-color: #F1F5F9;
+                background-color: #FFFFFF;
                 border: 1px solid #CBD5E1;
-                border-radius: 4px;
-                padding: 4px 12px;
-                font-size: 11px;
+                border-radius: 6px;
+                padding: 6px 14px;
+                font-size: 12px;
                 color: #1E293B;
             }
-            QPushButton:hover { background-color: #E2E8F0; }
-            QPushButton:disabled { color: #CBD5E1; }
+            QPushButton:hover { background-color: #F1F5F9; border-color: #2563EB; color: #2563EB; }
+            QPushButton:disabled { color: #CBD5E1; border-color: #E2E8F0; }
         """)
         self._prev_btn.clicked.connect(self.navigate_to_prev_diff)
         self._prev_btn.setEnabled(False)
         toolbar.addWidget(self._prev_btn)
 
         self._next_btn = QPushButton("下一条  ▶")
-        self._next_btn.setMinimumHeight(28)
+        self._next_btn.setMinimumHeight(30)
         self._next_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._next_btn.setStyleSheet(self._prev_btn.styleSheet())
         self._next_btn.clicked.connect(self.navigate_to_next_diff)
@@ -474,14 +473,6 @@ class ResultTable(QFrame):
 
         # 选中行高亮样式
         self._table.setStyleSheet("""
-            QTableView {
-                border: 1px solid #E2E8F0;
-                border-radius: 6px;
-                background-color: #FFFFFF;
-                gridline-color: #F1F5F9;
-                font-size: 12px;
-                outline: none;
-            }
             QTableView::item:selected {
                 background-color: transparent;
                 color: #1E293B;
@@ -490,14 +481,14 @@ class ResultTable(QFrame):
                 background-color: transparent;
             }
             QHeaderView::section {
-                background-color: #2C3E50;
+                background-color: #1E293B;
                 color: white;
-                font-weight: bold;
+                font-weight: 600;
                 font-size: 11px;
-                padding: 6px 8px;
+                padding: 8px 10px;
                 border: none;
-                border-right: 1px solid #3D566E;
-                border-bottom: 1px solid #3D566E;
+                border-right: 1px solid #334155;
+                border-bottom: 1px solid #334155;
             }
         """)
 
@@ -506,7 +497,7 @@ class ResultTable(QFrame):
         # 空状态提示
         self._empty_label = QLabel('📄  请先加载两个文件并点击"开始对比"\n\n💡 提示：双击结果行可查看详细的字段对比')
         self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._empty_label.setStyleSheet("color: #94A3B8; font-size: 16px; padding: 60px;")
+        self._empty_label.setStyleSheet("color: #94A3B8; font-size: 14px; padding: 60px 20px;")
         self._empty_label.setMinimumHeight(200)
         layout.addWidget(self._empty_label)
 
