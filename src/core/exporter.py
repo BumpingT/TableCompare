@@ -56,6 +56,7 @@ class ResultExporter:
         diff_result: DiffResult,
         output_path: str,
         only_diff: bool = False,
+        export_columns: list[str] | None = None,
     ) -> str:
         """
         将对比结果导出为 Excel（纵向格式：每条字段变化占一行）
@@ -64,6 +65,7 @@ class ResultExporter:
             diff_result: 对比结果
             output_path: 输出文件路径
             only_diff: 是否只导出差异行
+            export_columns: 要导出的列名列表，None 表示导出全部对比列
 
         Returns:
             导出文件的完整路径
@@ -73,6 +75,16 @@ class ResultExporter:
         key_column = diff_result.key_column
         compare_columns = diff_result.compare_columns
 
+        # 确定要导出的列
+        if export_columns is not None:
+            export_cols = [c for c in export_columns if c in compare_columns]
+        else:
+            export_cols = compare_columns[:]
+        if not export_cols:
+            export_cols = compare_columns[:]
+
+        logger.info(f"开始导出: {len(df)}行 列={export_cols} -> {output_path}")
+
         # 过滤只显示差异行
         if only_diff and not df.empty:
             df = df[df[STATUS_COL] != STATUS_SAME].copy()
@@ -80,8 +92,6 @@ class ResultExporter:
         if df.empty:
             logger.warning("没有数据可导出")
             raise ValueError("没有数据可导出")
-
-        logger.info(f"开始导出: {len(df)}行差异 -> {output_path}")
 
         # --- 构建纵向数据 ---
         # 表头: 键值 | 状态 | 字段名 | 旧值 | 新值
@@ -94,34 +104,25 @@ class ResultExporter:
             key_val = row.get(KEY_COL, '')
 
             if status == STATUS_ADDED:
-                # 新增行：所有字段的旧值都为空
-                for col in compare_columns:
+                for col in export_cols:
                     new_val = row.get(f'{col}_新', '')
                     new_str = str(new_val) if new_val is not None and new_val != '' else ''
                     rows_data.append([key_val, status_label, col, '', new_str])
 
             elif status == STATUS_DELETED:
-                # 删除行：所有字段的新值为空
-                for col in compare_columns:
+                for col in export_cols:
                     old_val = row.get(f'{col}_旧', '')
                     old_str = str(old_val) if old_val is not None and old_val != '' else ''
                     rows_data.append([key_val, status_label, col, old_str, ''])
 
             elif status == STATUS_MODIFIED:
-                # 修改行：只列出有变化的字段
                 source_idx = df.index[row_idx]
-                has_changed = False
-                for col in compare_columns:
+                for col in export_cols:
                     old_val = row.get(f'{col}_旧', '')
                     new_val = row.get(f'{col}_新', '')
                     old_str = str(old_val) if old_val is not None and old_val != '' else ''
                     new_str = str(new_val) if new_val is not None and new_val != '' else ''
-                    if (source_idx, col) in changed_cells:
-                        rows_data.append([key_val, status_label, col, old_str, new_str])
-                        has_changed = True
-                if not has_changed:
-                    # 兜底：至少显示一条
-                    rows_data.append([key_val, status_label, '（无变化字段）', '', ''])
+                    rows_data.append([key_val, status_label, col, old_str, new_str])
 
             # status == same: 不导出（因为 only_diff 已经过滤了）
 

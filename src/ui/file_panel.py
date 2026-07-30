@@ -471,7 +471,7 @@ class FilePanel(QFrame):
 
         self._name_label.setText(display_name)
         self._name_label.setStyleSheet("color: #1E293B; font-weight: bold;")
-        self._detail_label.setText(f"格式: {ext_upper}  |  大小: {size_str}  |  正在加载...")
+        self._detail_label.setText(f"格式: {ext_upper}  |  大小: {size_str}")
         self._clear_btn.setEnabled(True)
 
         self.setProperty("file_loaded", True)

@@ -15,6 +15,7 @@ from PySide6.QtCore import (
     QSortFilterProxyModel, QRect
 )
 from PySide6.QtGui import QColor, QFont, QBrush, QPainter
+from PySide6.QtWidgets import QStyle
 
 from ..core.comparator import (
     DiffResult, STATUS_COL, KEY_COL,
@@ -281,12 +282,30 @@ class DiffFilterProxyModel(QSortFilterProxyModel):
 # ============================================================
 
 class DiffItemDelegate(QStyledItemDelegate):
-    """自定义单元格绘制委托，优化选中高亮和边框"""
+    """自定义单元格绘制委托 — 选中时显示状态对应颜色（修改=黄、新增=绿、删除=红）"""
+
+    # 选中色（比普通状态色更深）
+    SELECTED_COLORS = {
+        STATUS_ADDED: QColor(167, 219, 186),      # 深绿
+        STATUS_DELETED: QColor(235, 170, 165),     # 深红
+        STATUS_MODIFIED: QColor(245, 225, 120),    # 深黄
+    }
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
-        # 绘制默认背景/文本
-        super().paint(painter, option, index)
-        # 已由 model.data(BackgroundRole) 提供背景色
+        # 获取该行的状态
+        status = index.data(Qt.ItemDataRole.UserRole) if index.isValid() else None
+
+        if option.state & QStyle.StateFlag.State_Selected and status in self.SELECTED_COLORS:
+            # 选中行：用状态对应的深色填充
+            painter.save()
+            painter.fillRect(option.rect, self.SELECTED_COLORS[status])
+            painter.restore()
+            # 只绘制文本，不绘制默认选中背景
+            opt = QStyleOptionViewItem(option)
+            opt.state &= ~QStyle.StateFlag.State_Selected
+            super().paint(painter, opt, index)
+        else:
+            super().paint(painter, option, index)
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QRect:
         # 为表头提供合理的尺寸
@@ -464,7 +483,7 @@ class ResultTable(QFrame):
                 outline: none;
             }
             QTableView::item:selected {
-                background-color: #DBEAFE;
+                background-color: transparent;
                 color: #1E293B;
             }
             QTableView::item:hover {

@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QStatusBar, QMessageBox, QFileDialog, QApplication, QFrame,
     QLabel, QPushButton, QProgressBar, QMenu, QMenuBar,
+    QDialog, QTableWidget, QAbstractItemView, QCheckBox,
 )
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QFont, QAction, QIcon
@@ -516,6 +517,75 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "提示", "请先执行对比操作")
             return
 
+        # 弹窗让用户选择要导出的列
+        cols = self._diff_result.compare_columns
+        if not cols:
+            QMessageBox.warning(self, "提示", "没有可导出的列")
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("选择要导出的列")
+        dialog.setMinimumSize(450, 450)
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(12)
+
+        label = QLabel("勾选要导出的字段（未勾选的不会出现在 Excel 中）：")
+        label.setStyleSheet("font-size: 13px; font-weight: bold; color: #1E293B;")
+        layout.addWidget(label)
+
+        # 用 QTableWidget 代替 QScrollArea，更稳定
+        table = QTableWidget(len(cols), 1)
+        table.verticalHeader().hide()
+        table.horizontalHeader().hide()
+        table.setShowGrid(False)
+        table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+
+        checkboxes = {}
+        for i, col in enumerate(cols):
+            cb = QCheckBox(col)
+            cb.setChecked(True)
+            cb.setStyleSheet("font-size: 12px; spacing: 8px; padding: 4px 0;")
+            table.setCellWidget(i, 0, cb)
+            checkboxes[col] = cb
+
+        table.resizeColumnToContents(0)
+        layout.addWidget(table, 1)
+
+        # 按钮行
+        btn_row = QHBoxLayout()
+        select_all = QPushButton("全选")
+        select_all.setFixedHeight(28)
+        select_all.clicked.connect(lambda: [cb.setChecked(True) for cb in checkboxes.values()])
+        deselect_all = QPushButton("取消全选")
+        deselect_all.setFixedHeight(28)
+        deselect_all.clicked.connect(lambda: [cb.setChecked(False) for cb in checkboxes.values()])
+        btn_row.addWidget(select_all)
+        btn_row.addWidget(deselect_all)
+        btn_row.addStretch()
+        layout.addLayout(btn_row)
+
+        # 确定/取消
+        bottom_row = QHBoxLayout()
+        bottom_row.addStretch()
+        cancel_btn = QPushButton("取消")
+        cancel_btn.setFixedHeight(32)
+        cancel_btn.clicked.connect(dialog.reject)
+        ok_btn = QPushButton("确定导出")
+        ok_btn.setFixedHeight(32)
+        ok_btn.setStyleSheet("QPushButton { background-color: #2563EB; color: white; border: none; border-radius: 6px; padding: 8px 24px; font-size: 13px; font-weight: bold; } QPushButton:hover { background-color: #1D4ED8; }")
+        ok_btn.clicked.connect(dialog.accept)
+        bottom_row.addWidget(cancel_btn)
+        bottom_row.addWidget(ok_btn)
+        layout.addLayout(bottom_row)
+
+        if dialog.exec() != QDialog.Accepted:
+            return
+
+        export_cols = [col for col, cb in checkboxes.items() if cb.isChecked()]
+        if not export_cols:
+            QMessageBox.warning(self, "提示", "请至少选择一列")
+            return
+
         old_name = self._metadata_old['filename'] if self._metadata_old else '旧表'
         new_name = self._metadata_new['filename'] if self._metadata_new else '新表'
         base_name = f"对比结果_{os.path.splitext(old_name)[0]}_vs_{os.path.splitext(new_name)[0]}.xlsx"
@@ -539,7 +609,7 @@ class MainWindow(QMainWindow):
             self._compare_panel._compare_btn.setEnabled(False)
 
             only_diff = self._result_table._filter_cb.isChecked()
-            ResultExporter.to_excel(self._diff_result, file_path, only_diff=only_diff)
+            ResultExporter.to_excel(self._diff_result, file_path, only_diff=only_diff, export_columns=export_cols)
 
             self._status_label.setText(f"✅ 导出成功: {os.path.basename(file_path)}")
             self._progress_label.setText("")
